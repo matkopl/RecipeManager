@@ -2,6 +2,7 @@
 .gradle/
 build/
 out/
+.idea/
 
 # Local configuration file
 local.properties
