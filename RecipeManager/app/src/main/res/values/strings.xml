@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">RecipeManager</string>
+    <string name="welcome">Welcome to RecipeManager!</string>
+    <string name="error">An error occurred</string>
+    <string name="recipe_image">Recipe Image</string>
+    <string name="go_to_favorites">Go to favorites</string>
+    <string name="settings">Settings</string>
+    <string name="search">Search</string>
+</resources>
