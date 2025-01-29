@@ -1,32 +1,55 @@
 package hr.algebra.recipe.repository
 
-import hr.algebra.recipe.api.RecipeApiService
 import hr.algebra.recipe.factory.RecipeApiFactory
 import hr.algebra.recipe.model.RecipeResponse
+import hr.algebra.recipe.model.Instruction
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
 class RecipeRepository {
 
-    private val apiService: RecipeApiService = RecipeApiFactory.apiService
-
-    fun getRandomRecipes(number: Int, onSuccess: (RecipeResponse) -> Unit, onError: (String) -> Unit) {
-        val call = apiService.getRandomRecipes(number)
-        call.enqueue(object : Callback<RecipeResponse> {
-            override fun onResponse(call: Call<RecipeResponse>, response: Response<RecipeResponse>) {
-                if (response.isSuccessful && response.body() != null) {
-                    response.body()?.let {
-                        onSuccess(it)
+    fun getRandomRecipes(
+        number: Int,
+        onSuccess: (RecipeResponse) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        RecipeApiFactory.apiService.getRandomRecipes(number)
+            .enqueue(object : Callback<RecipeResponse> {
+                override fun onResponse(call: Call<RecipeResponse>, response: Response<RecipeResponse>) {
+                    if (response.isSuccessful) {
+                        response.body()?.let { onSuccess(it) }
+                    } else {
+                        onError("Error fetching recipes: ${response.message()}")
                     }
-                } else {
-                    onError("Error: ${response.code()} ${response.message()}")
                 }
-            }
 
-            override fun onFailure(call: Call<RecipeResponse>, t: Throwable) {
-                onError("Failure: ${t.message}")
-            }
-        })
+                override fun onFailure(call: Call<RecipeResponse>, t: Throwable) {
+                    onError("Network failure: ${t.localizedMessage}")
+                }
+            })
+    }
+
+    fun getRecipeInstructions(
+        recipeId: Int,
+        onSuccess: (List<Instruction>) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        RecipeApiFactory.apiService.getRecipeInstructions(recipeId)
+            .enqueue(object : Callback<List<Instruction>> {
+                override fun onResponse(call: Call<List<Instruction>>, response: Response<List<Instruction>>) {
+                    if (response.isSuccessful) {
+                        val instructions = response.body()
+
+                        response.body()?.let { onSuccess(it) }
+                    } else {
+                        onError("Error fetching instructions: ${response.message()}")
+                    }
+                }
+
+                override fun onFailure(call: Call<List<Instruction>>, t: Throwable) {
+                    onError("Network failure: ${t.localizedMessage}")
+                }
+            })
     }
 }

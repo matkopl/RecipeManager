@@ -11,8 +11,8 @@ data class Recipe(
     val summary: String,
     @SerializedName("image")
     val imageUrl: String?,
-    @SerializedName("instructions")
-    val instructions: String?,
     @SerializedName("extendedIngredients")
-    val ingredients: List<Ingredient>
+    val ingredients: List<Ingredient>,
+    @SerializedName("analyzedInstructions")
+    val analyzedInstructions: List<Instruction>?,
 )
