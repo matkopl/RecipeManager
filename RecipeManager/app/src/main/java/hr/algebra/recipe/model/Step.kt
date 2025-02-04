@@ -8,8 +8,6 @@ data class Step(
     val number: Int,
     @SerializedName("step")
     val step: String,
-    @SerializedName("ingredients")
-    val ingredients: List<Ingredient>?,
     @SerializedName("equipment")
     val equipment: List<Equipment>?
 )

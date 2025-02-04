@@ -15,8 +15,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.RecipeManager">
         <activity
+            android:name=".FavoriteRecipesActivity"
+            android:exported="false" />
+        <activity
             android:name=".SplashScreenActivity"
-            android:exported="false"
+            android:exported="true"
             android:theme="@style/Theme.RecipeManager">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

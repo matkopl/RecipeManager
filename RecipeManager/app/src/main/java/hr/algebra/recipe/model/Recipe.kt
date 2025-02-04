@@ -12,7 +12,7 @@ data class Recipe(
     @SerializedName("image")
     val imageUrl: String?,
     @SerializedName("extendedIngredients")
-    val ingredients: List<Ingredient>,
+    val ingredients: List<Ingredient> = emptyList(),
     @SerializedName("analyzedInstructions")
     val analyzedInstructions: List<Instruction>?,
 )

@@ -5,7 +5,11 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import hr.algebra.recipe.model.Ingredient
+import hr.algebra.recipe.model.Instruction
 import hr.algebra.recipe.model.Recipe
 
 private const val DB_NAME = "recipes.db"
@@ -18,7 +22,9 @@ private val CREATE_TABLE = """
         title TEXT NOT NULL,
         summary TEXT NOT NULL,
         image TEXT NOT NULL,
-        recipeJson TEXT NOT NULL   
+        recipeJson TEXT NOT NULL,
+        ingredientsJson TEXT NOT NULL,
+        instructionsJson TEXT NOT NULL
     )
 """.trimIndent()
 
@@ -49,8 +55,12 @@ class RecipeSqlHelper(context: Context?) : SQLiteOpenHelper(
             put("summary", recipe.summary)
             put("image", recipe.imageUrl ?: "")
             put("recipeJson", gson.toJson(recipe))
+            put("ingredientsJson", gson.toJson(recipe.ingredients))
+
+            val instructionsJson = gson.toJson(recipe.analyzedInstructions)
+            put("instructionsJson", instructionsJson)
         }
-        db.insert(TABLE_NAME, null, values)
+        db.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE)
         db.close()
     }
 
@@ -72,14 +82,34 @@ class RecipeSqlHelper(context: Context?) : SQLiteOpenHelper(
     fun getAllRecipes(): List<Recipe> {
         val recipes = mutableListOf<Recipe>()
         val db = readableDatabase
-        val cursor: Cursor = db.rawQuery("SELECT recipeJson FROM $TABLE_NAME", null)
+        val cursor: Cursor = db.rawQuery("SELECT recipeJson, ingredientsJson, instructionsJson FROM $TABLE_NAME", null)
 
         while (cursor.moveToNext()) {
             val recipeJson = cursor.getString(cursor.getColumnIndexOrThrow("recipeJson"))
-            recipes.add(gson.fromJson(recipeJson, Recipe::class.java))
+            val recipe = gson.fromJson(recipeJson, Recipe::class.java)
+
+            val ingredientsJson = cursor.getString(cursor.getColumnIndexOrThrow("ingredientsJson"))
+            val typeIngredients = object : TypeToken<List<Ingredient>>() {}.type
+            val ingredients: List<Ingredient> = try {
+                gson.fromJson(ingredientsJson, typeIngredients) ?: emptyList()
+            } catch (e: Exception) {
+                emptyList()
+            }
+
+            val instructionsJson = cursor.getString(cursor.getColumnIndexOrThrow("instructionsJson"))
+            val typeInstructions = object : TypeToken<List<Instruction>>() {}.type
+            val instructions: List<Instruction> = try {
+                gson.fromJson(instructionsJson, typeInstructions) ?: emptyList()
+            } catch (e: Exception) {
+                emptyList()
+            }
+
+            val updatedRecipe = recipe.copy(ingredients = ingredients, analyzedInstructions = instructions)
+            recipes.add(updatedRecipe)
         }
         cursor.close()
         db.close()
         return recipes
     }
+
 }
