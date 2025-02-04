@@ -12,4 +12,6 @@
     <dimen name="_16sp">16sp</dimen>
     <dimen name="_50dp">50dp</dimen>
     <dimen name="_120dp">120dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="_24sp">24sp</dimen>
 </resources>

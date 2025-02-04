@@ -5,16 +5,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import hr.algebra.recipe.adapter.EquipmentAdapter
 import hr.algebra.recipe.adapter.StepAdapter
 import hr.algebra.recipe.databinding.FragmentRecipeInstructionBinding
-import hr.algebra.recipe.factory.RecipeApiFactory
 import hr.algebra.recipe.model.Equipment
+import hr.algebra.recipe.model.Instruction
 import hr.algebra.recipe.model.Step
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 class RecipeInstructionFragment : Fragment() {
 
@@ -37,40 +36,40 @@ class RecipeInstructionFragment : Fragment() {
 
         val recipeId = arguments?.getInt("recipe_id") ?: -1
         if (recipeId != -1) {
-            fetchInstructions(recipeId)
+            fetchInstructions()
         } else {
             binding.tvInstructionsHeader.text = "No instructions available."
         }
 
         binding.btnCloseFragment.setOnClickListener {
-            requireActivity().supportFragmentManager.beginTransaction()
-                .remove(this)
-                .commit()
+            parentFragmentManager.popBackStack()
 
             requireActivity().findViewById<View>(hr.algebra.recipe.R.id.mainContent).visibility = View.VISIBLE
             requireActivity().findViewById<View>(hr.algebra.recipe.R.id.fragment_container).visibility = View.GONE
         }
+
     }
 
-    private fun fetchInstructions(recipeId: Int) {
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                val response = RecipeApiFactory.apiService.getRecipeInstructions(recipeId)
-                val instructionsList = response.execute().body()
+    private fun fetchInstructions() {
+        val instructionsJson = arguments?.getString("recipe_instructions") ?: "[]"
 
-                requireActivity().runOnUiThread {
-                    if (!instructionsList.isNullOrEmpty()) {
-                        val steps = instructionsList.first().steps ?: emptyList()
+        val type = object : TypeToken<List<Instruction>>() {}.type
+        val instructions: List<Instruction> = try {
+            Gson().fromJson(instructionsJson, type) ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
 
-                        val allEquipment = steps.flatMap { it.equipment ?: emptyList() }
-                            .distinctBy { it.id }
 
-                        setupRecyclerViews(steps, allEquipment)
-                    }
-                }
-            } catch (e: Exception) {
-                requireActivity().runOnUiThread { binding.tvInstructionsHeader.text = "Failed to load instructions." }
-            }
+        val steps = if (instructions.isNotEmpty()) instructions.first().steps ?: emptyList() else emptyList()
+
+        val allEquipment = steps.flatMap { it.equipment ?: emptyList() }
+            .distinctBy { it.id }
+
+        if (steps.isNotEmpty()) {
+            setupRecyclerViews(steps, allEquipment)
+        } else {
+            binding.tvInstructionsHeader.text = "No instructions available."
         }
     }
 
@@ -84,7 +83,8 @@ class RecipeInstructionFragment : Fragment() {
             binding.rvEquipment.visibility = View.VISIBLE
 
             equipmentAdapter = EquipmentAdapter(equipment)
-            binding.rvEquipment.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+            binding.rvEquipment.layoutManager =
+                LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
             binding.rvEquipment.adapter = equipmentAdapter
             equipmentAdapter.notifyDataSetChanged()
         } else {

@@ -2,21 +2,20 @@ package hr.algebra.recipe
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.gson.Gson
 import hr.algebra.recipe.adapter.RecipeAdapter
 import hr.algebra.recipe.databinding.ActivityHostBinding
-import hr.algebra.recipe.model.RecipeResponse
-import hr.algebra.recipe.utils.NetworkUtils
+import hr.algebra.recipe.model.Recipe
 import hr.algebra.recipe.viewmodel.RecipeViewModel
 import kotlinx.coroutines.launch
-import android.view.View
 
 class HostActivity : AppCompatActivity() {
 
@@ -41,40 +40,24 @@ class HostActivity : AppCompatActivity() {
 
     private fun setupRecyclerView() {
         recipeAdapter = RecipeAdapter(emptyList()) { recipe ->
-            val intent = Intent(this, RecipeDetailActivity::class.java).apply {
-                putExtra("recipe_id", recipe.id)
-                putExtra("recipe_title", recipe.title)
-                putExtra("recipe_summary", recipe.summary)
-                putExtra("recipe_image", recipe.imageUrl)
-
-                val ingredients = recipe.ingredients?.joinToString("\n") { "- ${it.original}" } ?: "No ingredients available"
-                putExtra("recipe_ingredients", ingredients)
-
-                val instructions = recipe.analyzedInstructions?.firstOrNull()?.steps
-                    ?.joinToString("\n") { "${it.number}. ${it.step}" }
-                    ?: "No instructions available"
-                putExtra("recipe_instructions", instructions)
-            }
-
-            startActivity(intent)
-            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+            openRecipeDetail(recipe)
         }
 
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = recipeAdapter
     }
 
-
     private fun setupFabFavorites() {
         binding.fabFavorites.setOnClickListener {
-            Toast.makeText(this, "Favorites clicked!", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, FavoriteRecipesActivity::class.java)
+            startActivity(intent)
         }
     }
 
     private fun observeViewModel() {
         lifecycleScope.launch {
             recipeViewModel.recipes.collect { response ->
-                response?.let { updateUI(it) }
+                response?.let { updateUI(it.recipes) }
             }
         }
 
@@ -88,36 +71,11 @@ class HostActivity : AppCompatActivity() {
     }
 
     private fun fetchRecipes() {
-        if (NetworkUtils.isNetworkAvailable(this)) {
-            recipeViewModel.fetchRandomRecipes(10)
-        } else {
-            showLoading(false)
-            showError("No internet connection")
-        }
+        recipeViewModel.fetchRandomRecipes(10)
     }
 
-    private fun updateUI(response: RecipeResponse) {
-        val recipes = response.recipes
-        recipeAdapter = RecipeAdapter(recipes) { recipe ->
-            val intent = Intent(this, RecipeDetailActivity::class.java).apply {
-                putExtra("recipe_id", recipe.id)
-                putExtra("recipe_title", recipe.title)
-                putExtra("recipe_summary", recipe.summary)
-                putExtra("recipe_image", recipe.imageUrl)
-
-                val ingredients = recipe.ingredients?.joinToString("\n") { "- ${it.original}" } ?: "No ingredients available"
-                putExtra("recipe_ingredients", ingredients)
-
-                val instructions = recipe.analyzedInstructions?.firstOrNull()?.steps
-                    ?.joinToString("\n") { "${it.number}. ${it.step}" }
-                    ?: "No instructions available"
-                putExtra("recipe_instructions", instructions)
-            }
-
-            startActivity(intent)
-            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
-        }
-        binding.recyclerView.adapter = recipeAdapter
+    private fun updateUI(recipes: List<Recipe>) {
+        recipeAdapter.updateRecipes(recipes)
     }
 
     private fun showLoading(isLoading: Boolean) {
@@ -127,6 +85,19 @@ class HostActivity : AppCompatActivity() {
 
     private fun showError(message: String) {
         Toast.makeText(this, "Error: $message", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun openRecipeDetail(recipe: Recipe) {
+        val intent = Intent(this, RecipeDetailActivity::class.java).apply {
+            putExtra("recipe_id", recipe.id)
+            putExtra("recipe_title", recipe.title)
+            putExtra("recipe_summary", recipe.summary)
+            putExtra("recipe_image", recipe.imageUrl)
+            putExtra("recipe_ingredients", Gson().toJson(recipe.ingredients))
+            putExtra("recipe_instructions", Gson().toJson(recipe.analyzedInstructions))
+        }
+        startActivity(intent)
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
