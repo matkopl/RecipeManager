@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <ListPreference
+        android:key="recipe_count"
+        android:title="Number of Recipes"
+        android:summary="Select how many recipes to display"
+        android:defaultValue="10"
+        android:entries="@array/recipe_count_options"
+        android:entryValues="@array/recipe_count_values"/>
+
+    <Preference
+        android:key="clear_favorites"
+        android:title="Clear Favorites"
+        android:summary="Delete all favorite recipes"/>
+
+</PreferenceScreen>

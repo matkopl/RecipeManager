@@ -26,7 +26,7 @@ class EquipmentAdapter(private val equipmentList: List<Equipment>) :
         Picasso.get()
             .load(equipment.image)
             .placeholder(R.drawable.ic_placeholder)
-            .error(R.drawable.error_image)
+            .error(R.drawable.ic_error)
             .into(holder.binding.ivEquipmentImage)
     }
 

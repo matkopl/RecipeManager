@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.squareup.picasso.Picasso
+import hr.algebra.recipe.R
 import hr.algebra.recipe.databinding.RecipeItemBinding
 import hr.algebra.recipe.model.Recipe
 
@@ -20,9 +21,12 @@ class RecipeAdapter(
     override fun onBindViewHolder(holder: RecipeViewHolder, position: Int) {
         val recipe = recipeList[position]
         holder.binding.tvRecipeTitle.text = recipe.title
-        holder.binding.tvRecipeDescription.text = recipe.summary
 
-        Picasso.get().load(recipe.imageUrl).into(holder.binding.ivRecipeImage)
+        Picasso.get()
+            .load(recipe.imageUrl)
+            .placeholder(R.drawable.ic_placeholder)
+            .error(R.drawable.ic_error)
+            .into(holder.binding.ivRecipeImage)
 
         holder.itemView.setOnClickListener { onItemClick(recipe) }
     }

@@ -28,6 +28,12 @@ class FavoriteRecipesActivity : AppCompatActivity() {
         loadFavorites()
     }
 
+    override fun onResume() {
+        super.onResume()
+        loadFavorites()
+    }
+
+
     private fun setupRecyclerView() {
         recipeAdapter = RecipeAdapter(emptyList()) { recipe ->
             val intent = Intent(this, RecipeDetailActivity::class.java).apply {

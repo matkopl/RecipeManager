@@ -112,4 +112,10 @@ class RecipeSqlHelper(context: Context?) : SQLiteOpenHelper(
         return recipes
     }
 
+    fun deleteAllRecipes() {
+        val db = writableDatabase
+        db.execSQL("DELETE FROM $TABLE_NAME")
+        db.close()
+    }
+
 }
